@@ -1,41 +1,55 @@
-import { useRef } from "react"
-import { useFrame } from "@react-three/fiber"
 import { easing } from "maath"
 import { useSnapshot } from "valtio"
+import { useFrame } from "@react-three/fiber"
+import { Decal, useGLTF, useTexture } from "@react-three/drei"
 
 import state from "../store"
 
-const CameraRig = ({ children }) => {
-	const group = useRef()
+const Shirt = () => {
 	const snap = useSnapshot(state)
+	const { nodes, materials } = useGLTF("/shirt_baked.glb")
 
-	useFrame((state, delta) => {
-		const isBreakpoint = window.innerWidth <= 1260
-		const isMobile = window.innerWidth <= 600
+	const logoTexture = useTexture(snap.logoDecal)
+	const fullTexture = useTexture(snap.fullDecal)
 
-		// set the initial position of the model
-		let targetPosition = [-0.4, 0, 2]
-		if (snap.intro) {
-			if (isBreakpoint) targetPosition = [0, 0, 2]
-			if (isMobile) targetPosition = [0, 0.2, 2.5]
-		} else {
-			if (isMobile) targetPosition = [0, 0, 2.5]
-			else targetPosition = [0, 0, 2]
-		}
+	useFrame((state, delta) =>
+		easing.dampC(materials.lambert1.color, snap.color, 0.25, delta)
+	)
 
-		// set model camera position
-		easing.damp3(state.camera.position, targetPosition, 0.25, delta)
+	const stateString = JSON.stringify(snap)
 
-		// set the model rotation smoothly
-		easing.dampE(
-			group.current.rotation,
-			[state.pointer.y / 10, -state.pointer.x / 5, 0],
-			0.25,
-			delta
-		)
-	})
+	return (
+		<group key={stateString}>
+			<mesh
+				castShadow
+				geometry={nodes.T_Shirt_male.geometry}
+				material={materials.lambert1}
+				material-roughness={1}
+				dispose={null}
+			>
+				{snap.isFullTexture && (
+					<Decal
+						position={[0, 0, 0]}
+						rotation={[0, 0, 0]}
+						scale={1}
+						map={fullTexture}
+					/>
+				)}
 
-	return <group ref={group}>{children}</group>
+				{snap.isLogoTexture && (
+					<Decal
+						position={[0, 0.04, 0.15]}
+						rotation={[0, 0, 0]}
+						scale={0.15}
+						map={logoTexture}
+						map-anisotropy={16}
+						depthTest={false}
+						depthWrite={true}
+					/>
+				)}
+			</mesh>
+		</group>
+	)
 }
 
-export default CameraRig
+export default Shirt
