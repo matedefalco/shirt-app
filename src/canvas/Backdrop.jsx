@@ -1,41 +1,35 @@
 import { useRef } from "react"
-import { useFrame } from "@react-three/fiber"
-import { easing } from "maath"
-import { useSnapshot } from "valtio"
+import { AccumulativeShadows, RandomizedLight } from "@react-three/drei"
 
-import state from "../store"
+const Backdrop = () => {
+	const shadows = useRef()
 
-const CameraRig = ({ children }) => {
-	const group = useRef()
-	const snap = useSnapshot(state)
-
-	useFrame((state, delta) => {
-		const isBreakpoint = window.innerWidth <= 1260
-		const isMobile = window.innerWidth <= 600
-
-		// set the initial position of the model
-		let targetPosition = [-0.4, 0, 2]
-		if (snap.intro) {
-			if (isBreakpoint) targetPosition = [0, 0, 2]
-			if (isMobile) targetPosition = [0, 0.2, 2.5]
-		} else {
-			if (isMobile) targetPosition = [0, 0, 2.5]
-			else targetPosition = [0, 0, 2]
-		}
-
-		// set model camera position
-		easing.damp3(state.camera.position, targetPosition, 0.25, delta)
-
-		// set the model rotation smoothly
-		easing.dampE(
-			group.current.rotation,
-			[state.pointer.y / 10, -state.pointer.x / 5, 0],
-			0.25,
-			delta
-		)
-	})
-
-	return <group ref={group}>{children}</group>
+	return (
+		<AccumulativeShadows
+			ref={shadows}
+			temporal
+			frames={60}
+			alphaTest={0.85}
+			scae={10}
+			rotation={[Math.PI / 2, 0, 0]}
+			position={[0, 0, -0.14]}
+		>
+			<RandomizedLight
+				amount={4}
+				radius={9}
+				intensity={0.55}
+				ambient={0.25}
+				position={[5, 5, -10]}
+			/>
+			<RandomizedLight
+				amount={4}
+				radius={5}
+				intensity={0.25}
+				ambient={0.55}
+				position={[-5, 5, -9]}
+			/>
+		</AccumulativeShadows>
+	)
 }
 
-export default CameraRig
+export default Backdrop
